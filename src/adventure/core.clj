@@ -4,7 +4,7 @@
   (:gen-class))
 
 (def the-map
-  {:foyer {:desc "The walls are freshly painted but do not have any pictures.  You get the feeling it was just created for a game or something. "
+  {:foyer {:desc "The walls are freshly painted but do not have any pictures.  You get the feeling it was just created for a game or something. How do I escape?"
            :title "in the foyer"
            :dir {:down :basement-main
                  :north :kitchen
@@ -81,6 +81,7 @@
                  :actions #{:eat-chicken :take-chicken}}})
 
 
+(def winPotion #{:grue-heart :chicken :durian :wine-bottle :raw-egg})
 
 
 (defn safeAction [player]
@@ -185,6 +186,7 @@
                     Heart of Beast
                     Chicken Leg
                     Odorous Fruit
+                    Raw Egg
                     Wine\n
 
                     Hint: D Major Chord"
@@ -210,8 +212,31 @@
             (do (println "You can't seem to open the wine casket. Perhaps you need something large and sharp to open it.") player))
         (do (println "You can't do that here.") player)))
 
-(defn playPiano [player])
-    
+(defn playPiano [player]
+    (if (= (player :location) :piano-room)
+        (do (println "What notes should you play? (i.e ceg#a#)")
+            (let [chord (read-line)]
+                (if (= chord "df#a")
+                    (do (println "The wall behind the piano swings open and you step in!")
+                        (assoc-in player [:location] :alchemy-room))
+                    (do (println "That didn't seem to do anything. Maybe something will tell me what to play?") player))))
+        (do (println "You can't do that here.") player)))
+
+(defn useTable [player]
+    (if (= (player :location) :alchemy-room)
+        (do (println "What should you mix? (space separated)")
+            (let [ingredients (map #(keyword %) (str/split (read-line) #"\s+"))]
+                (if (every? (player :inventory) ingredients)
+                    (if (= (set ingredients) winPotion)
+                        (do (println "The pot bubbles and turns to a golden hue! You drink the potion and immediately teleport out! You win!.")
+                            (System/exit 0))
+                        (do (println "The pot bubbles and turns to a cloudy black color. You drink the potion and you turn into a grue!")
+                            (System/exit 0)))
+                    (do (println "You don't have all of those.") player))))
+        (do (println "You can't do that here.") player)))
+
+
+
 
 ;returns player
 (defn respond [player command]
@@ -229,7 +254,7 @@
          [:addItem] (addItem player)
          [:removeItem] (removeItem player)
 
-         ;actions
+         ;action
          [:crack-safe] (safeAction player)
          [:unlock-door] (slaughterAction player)
          [:grab-cleaver] (grabItem player)
@@ -248,6 +273,7 @@
          [:eat-chicken] (eatChicken player)
          [:open-casket] (openCasket player)
          [:play-piano] (playPiano player)
+         [:use-table] (useTable player)
 
 
          _ (do (println "I don't understand you.")
