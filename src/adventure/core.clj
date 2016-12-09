@@ -17,7 +17,8 @@
                    :dir {:north :grue-pen
                          :east :slaughter-entrance
                          :west :pool
-                         :south :guest-bedroom}
+                         :south :guest-bedroom
+                         :up :foyer}
                    :contents #{}
                    :actions #{}}
    :pool {:desc "It looks extremely refreshing. Something shiny catches your eye at the bottom of the pool. "
@@ -28,6 +29,7 @@
    :slaughter-entrance {:desc "There is a second door that appears to be locked. You need some sort of key to get in. "
                         :title "in the entrance to the slaughter house"
                         :dir {:west :basement-main}
+                        :contents #{}
                         :actions #{:unlock-door}}
    :slaughter-main {:desc "A metallic, cloying scent of blood fills your nostrils. You observe a large amount of severed limbs sprawled across the room. You spot a cleaver on the table. This could be useful. "
                     :title "in the main slaughter room"
@@ -108,11 +110,6 @@
 
 
 
-
-
-
-
-
 (def winPotion #{:grue-heart :chicken :durian :wine-bottle :raw-egg :doll})
 
 (def doll (atom "awake"))
@@ -132,16 +129,18 @@
 
 (defn options [player]
     (let [location (player :location)
+            addedActions (player :addedActions)
             neighbors (-> the-map location :dir)
             directions (keys neighbors)
-            actions (-> the-map location :actions)]
-        (do (println (concat directions actions)) player)))
-
-
+            actions (-> the-map location :actions)
+            options (vec (concat directions actions addedActions))
+            final (pr-str (map #(name %) options))]
+        (do (println (str "Your options are: " final)) player)))
 
 (def adventurer
   {:location :foyer
    :inventory #{}
+   :addedActions #{:i}
    :tick 0
    :seen #{}})
 
@@ -207,7 +206,9 @@
             (let [cabNumber (read-line)]
                 (if (= cabNumber "3")
                     (do (println "You found a strange recipe! You place the recipe in your inventory.")
-                        (update-in player [:inventory] #(conj % :recipe)))
+                        ;(update-in player [:inventory] #(conj % :recipe))
+                        ;(update-in player [:addedActions] #(conj % :read-recipe))
+                        (-> player (update-in [:inventory] #(conj % :recipe)) (update-in [:addedActions] #(conj % :read-recipe))))
                     (do (println "Nothing here.") player))))
         (do (println "You can't do that here.") player)))
 
@@ -222,9 +223,8 @@
                     Raw Egg
                     Hubert
                     Wine\n
-
-                    Hint: D Major Chord"
-                     player))
+                    Hint: D Major Chord")
+            player)
         (do (println "What recipe?") player)))
 
 
@@ -285,13 +285,12 @@
             (do (println "You wind up the music box and play it. The doll seems very peaceful.")
                 (reset! doll "asleep")
                 player)
-            (do (println "What music box?")))
+            (do (println "What music box?") player))
         (do (println "You can't do that here.") player)))
 
 (defn playDrums [player]
     (if (= (player :location) :loft)
-        (do (println "You play an amazing drum solo. Halfway through, you notice the doll walking towards you.
-                        Stunned in disbelief, you watch as he pulls out a knife and slits your throat.")
+        (do (println "You play an amazing drum solo. Halfway through, you notice the doll blinks. While you're stunned, it slits your throat.")
             (System/exit 0))
         (do (println "Where's the drumset?") player)))
 
@@ -358,5 +357,6 @@
          local-player adventurer]
     (let [pl (status local-player)
           _  (println "What do you want to do?")
+          npl (options pl)
           command (read-line)]
-      (recur local-map (respond pl (to-keywords command))))))
+      (recur local-map (respond npl (to-keywords command))))))
