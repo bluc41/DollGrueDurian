@@ -359,4 +359,5 @@
           _  (println "What do you want to do?")
           npl (options pl)
           command (read-line)]
+        (println)
       (recur local-map (respond npl (to-keywords command))))))
