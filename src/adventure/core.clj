@@ -4,11 +4,12 @@
   (:gen-class))
 
 (def the-map
-  {:foyer {:desc "The walls are freshly painted but do not have any pictures.  You get the feeling it was just created for a game or something. How do I escape?"
+  {:foyer {:desc "The walls are freshly painted and there are pictures of some strange creature. You get the feeling it was just created for a game or something. "
            :title "in the foyer"
            :dir {:down :basement-main
                  :north :kitchen
-                 :east :living-room}
+                 :east :living-room
+                 :up :upstairs-hallway}
            :contents #{:raw-egg}
            :actions #{:take-egg}}
    :basement-main {:desc "It's just about pitch black but you can make out a couple shapes. There's water coming under the door to the west. To the east lies a large steel door with blood smeared across it. A normal bedroom door lies to south. You hear growling coming from the north. "
@@ -78,11 +79,43 @@
                  :title "in the dining room"
                  :dir {:south :kitchen}
                  :contents #{:chicken}
-                 :actions #{:eat-chicken :take-chicken}}})
+                 :actions #{:eat-chicken :take-chicken}}
+
+    ;upstairs
+    :upstairs-hallway {:desc "The wall is lined with pictures of two different dolls, a boy and a girl. "
+                       :title "in the hallway upstairs"
+                       :dir {:down :foyer
+                             :east :master-bedroom
+                             :west :loft
+                             :north :child-bedroom}
+                       :contents #{}
+                       :actions #{}}
+    :master-bedroom {:desc "There is a huge bed along the back wall. "
+                     :title "in the master bedroom"
+                     :dir {:west :upstairs-hallway}
+                     :contents #{:music-box}
+                     :actions #{:take-musicbox}}
+    :child-bedroom {:desc "There's a crib with a doll in the corner of the room. There is also a note on the desk. "
+                    :title "in the child bedroom"
+                    :dir {:south :upstairs-hallway}
+                    :contents #{:doll :note}
+                    :actions #{:read-note :play-music :take-doll}}
+    :loft {:desc "This seems to a playroom. There's a drumset in the corner! "
+           :title "in the loft"
+           :dir {:east :upstairs-hallway}
+           :contents #{}
+           :actions #{:play-drums}}})
 
 
-(def winPotion #{:grue-heart :chicken :durian :wine-bottle :raw-egg})
 
+
+
+
+
+
+(def winPotion #{:grue-heart :chicken :durian :wine-bottle :raw-egg :doll})
+
+(def doll (atom "awake"))
 
 (defn safeAction [player]
     (cond
@@ -183,10 +216,11 @@
     ;check that you have it
     (if (contains? (player :inventory) :recipe)
         (do (println "Recipe:
-                    Heart of Beast
+                    Heart
                     Chicken Leg
                     Odorous Fruit
                     Raw Egg
+                    Hubert
                     Wine\n
 
                     Hint: D Major Chord"
@@ -235,6 +269,32 @@
                     (do (println "You don't have all of those.") player))))
         (do (println "You can't do that here.") player)))
 
+(defn takeDoll [player]
+    (if (= (player :location) :child-bedroom)
+        (if (= @doll "asleep")
+            (do (println "You grab the doll and place it in your backpack.")
+                (update-in player [:inventory] #(conj % :doll)))
+            (do (println "The doll blinks! The doll takes out a concealed knife and slits your throat.")
+                (System/exit 0)))
+        (do (println "You can't do that here.") player)))
+
+
+(defn playMusicBox [player]
+    (if (= (player :location) :child-bedroom)
+        (if (contains? (player :inventory) :music-box)
+            (do (println "You wind up the music box and play it. The doll seems very peaceful.")
+                (reset! doll "asleep")
+                player)
+            (do (println "What music box?")))
+        (do (println "You can't do that here.") player)))
+
+(defn playDrums [player]
+    (if (= (player :location) :loft)
+        (do (println "You play an amazing drum solo. Halfway through, you notice the doll walking towards you.
+                        Stunned in disbelief, you watch as he pulls out a knife and slits your throat.")
+            (System/exit 0))
+        (do (println "Where's the drumset?") player)))
+
 
 
 
@@ -254,7 +314,7 @@
          [:addItem] (addItem player)
          [:removeItem] (removeItem player)
 
-         ;action
+         ;basement actions
          [:crack-safe] (safeAction player)
          [:unlock-door] (slaughterAction player)
          [:grab-cleaver] (grabItem player)
@@ -274,6 +334,15 @@
          [:open-casket] (openCasket player)
          [:play-piano] (playPiano player)
          [:use-table] (useTable player)
+
+         ;upstairs actions
+         [:take-musicbox] (grabItem player)
+         [:read-note] (do (println "Constance, make sure Hubert is asleep before you move him. He gets angry otherwise. Music oughta do the trick. Oh, also he's very sensitive to noise. - Helga") player)
+         [:take-doll] (takeDoll player)
+         [:play-music] (playMusicBox player)
+         [:play-drums] (playDrums player)
+
+
 
 
          _ (do (println "I don't understand you.")
