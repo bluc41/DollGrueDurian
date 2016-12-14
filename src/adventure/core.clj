@@ -191,13 +191,13 @@
             :else (do (println "You are completely unarmed. The grue destroys you.") (System/exit 0)))))
 
 ;;TESTING PURPOSES, REMOVE this
-(defn addItem [player]
-    (let [item (read-line)]
-        (update-in player [:inventory] #(conj % (keyword item)))))
+;(defn addItem [player]
+;    (let [item (read-line)]
+;        (update-in player [:inventory] #(conj % (keyword item)))))
 
-(defn removeItem [player]
-    (let [item (read-line)]
-        (update-in player [:inventory] #(disj % (keyword item)))))
+;(defn removeItem [player]
+;    (let [item (read-line)]
+;        (update-in player [:inventory] #(disj % (keyword item)))))
 
 ;BUG if you already have the recipe
 (defn searchCabinets [player]
@@ -310,8 +310,8 @@
          ;utilities
          [:i] (do (println (player :inventory)) player)
          [:o] (options player)
-         [:addItem] (addItem player)
-         [:removeItem] (removeItem player)
+         ;[:addItem] (addItem player)
+         ;[:removeItem] (removeItem player)
 
          ;basement actions
          [:crack-safe] (safeAction player)
